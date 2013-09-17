@@ -11,6 +11,8 @@
 #import "SRDefine.h"
 #import <QuartzCore/QuartzCore.h>
 
+#define kQGLUpdateEmptyLabelTag 7623
+
 @interface SRRefreshView()
 
 @property (nonatomic, assign)   BOOL    broken;
@@ -291,8 +293,54 @@
     _oldLength = 0;
 }
 
+- (void)endRefresWithUpdateEmptyString:(NSString *)updateEmptyString {
+  if (updateEmptyString) {
+    [UIView transitionWithView:_activityIndicatorView
+                      duration:0.3f
+                       options:UIViewAnimationCurveEaseIn
+        animations:^
+        {
+          _activityIndicatorView.layer.transform = CATransform3DRotate(
+              CATransform3DMakeScale(0.01f, 0.01f, 0.1f), -M_PI, 0, 0, 1);
+        } completion:^(BOOL finished)
+    {
+      UILabel *emptyLabel = (UILabel *) [self viewWithTag:kQGLUpdateEmptyLabelTag];
+      if (!emptyLabel) {
+        emptyLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+        emptyLabel.frame = CGRectMake(0.0f, 0.0f, 320.0f, 32.0f);
+        emptyLabel.numberOfLines = 1;
+        emptyLabel.font = [UIFont systemFontOfSize:14.0f];
+        emptyLabel.textColor = [UIColor colorWithWhite:0.2f alpha:1.0f];
+        emptyLabel.shadowColor = [UIColor whiteColor];
+        emptyLabel.shadowOffset = CGSizeMake(1.0f, 1.0f);
+        emptyLabel.textAlignment = NSTextAlignmentCenter;
+        emptyLabel.backgroundColor = [UIColor clearColor];
+        emptyLabel.tag = kQGLUpdateEmptyLabelTag;
+
+        [self addSubview:emptyLabel];
+      }
+
+      emptyLabel.text = updateEmptyString;
+      emptyLabel.hidden = NO;
+
+      [NSTimer scheduledTimerWithTimeInterval:1.0f target:self selector:@selector(endRefresh) userInfo:nil repeats:NO];
+
+    }];
+  }else {
+    [self endRefresh];
+  }
+}
+
+
 - (void)restore
 {
+
+  UILabel *emptyLabel = (UILabel *) [self viewWithTag:kQGLUpdateEmptyLabelTag];
+
+  if (emptyLabel) {
+    emptyLabel.hidden = YES;
+  }
+
     _slime.toPoint = _slime.startPoint;
     [UIView transitionWithView:_activityIndicatorView
                       duration:0.3f
